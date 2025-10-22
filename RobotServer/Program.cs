@@ -1,0 +1,164 @@
+using System;
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using System.Text;
+using System.IO;
+
+namespace RobotServer
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string baseAddress = "http://localhost:8000/RobotService";
+            using (ServiceHost host = new ServiceHost(typeof(RobotService), new Uri(baseAddress)))
+            {
+                var smb = host.Description.Behaviors.Find<ServiceDebugBehavior>();
+                if (smb == null) {
+                    host.Description.Behaviors.Add(new ServiceDebugBehavior() { IncludeExceptionDetailInFaults = true });
+                } else {
+                    smb.IncludeExceptionDetailInFaults = true;
+                }
+
+                host.AddServiceEndpoint(typeof(IRobotService), new BasicHttpBinding(), "");
+                try
+                {
+                    host.Open();
+                    Console.WriteLine("RobotService is running at " + baseAddress);
+                    Console.WriteLine("Press Enter to stop...");
+                    Console.ReadLine();
+                    host.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to start service: " + ex);
+                    Console.WriteLine("Press Enter to exit..."); Console.ReadLine();
+                }
+            }
+        }
+    }
+
+    public class RobotService : IRobotService
+    {
+        private static readonly byte[] SharedKey = Encoding.UTF8.GetBytes("ThisIsA16ByteKey"); // 16 bytes
+        private static readonly object ExecLock = new object();
+        private static RobotState CurrentState = new RobotState() { X = 2, Y = 2, RotationDeg = 0 };
+        private const int GRID = 5;
+
+        private static readonly System.Collections.Generic.Dictionary<string, int> ClientPriority = new System.Collections.Generic.Dictionary<string, int>()
+        {
+            {"KEY_CLIENT_1_123", 1},
+            {"KEY_CLIENT_2_456", 2},
+            {"KEY_CLIENT_3_789", 2}
+        };
+
+        public OperationResult SendCommand(CommandMessage msg)
+        {
+            var timestamp = DateTime.UtcNow;
+            string apiKey = msg?.ApiKey ?? "";
+            string payload;
+            try
+            {
+                payload = DecryptIfNeeded(msg?.EncryptedPayloadBase64);
+            }
+            catch(Exception ex)
+            {
+                LogAttempt(apiKey, msg?.EncryptedPayloadBase64 ?? "", false, "Decrypt error: " + ex.Message, timestamp);
+                return new OperationResult { Success = false, Message = "Decrypt error" };
+            }
+
+            if(!ClientPriority.ContainsKey(apiKey))
+            {
+                LogAttempt(apiKey, payload, false, "Invalid apiKey", timestamp);
+                return new OperationResult { Success = false, Message = "Invalid apiKey" };
+            }
+
+            if(!IsOperationAllowed(apiKey, payload))
+            {
+                LogAttempt(apiKey, payload, false, "Operation not allowed for this client", timestamp);
+                return new OperationResult { Success = false, Message = "Operation not allowed" };
+            }
+
+            lock(ExecLock)
+            {
+                bool applied = TryApplyCommand(payload, out string message);
+                LogAttempt(apiKey, payload, applied, message, timestamp);
+                return new OperationResult
+                {
+                    Success = applied,
+                    Message = message,
+                    State = new RobotStateDto { X = CurrentState.X, Y = CurrentState.Y, RotationDeg = CurrentState.RotationDeg }
+                };
+            }
+        }
+
+        private bool IsOperationAllowed(string apiKey, string payload)
+        {
+            if(apiKey == "KEY_CLIENT_1_123") return true;
+            if(apiKey == "KEY_CLIENT_2_456") return payload != null && payload.StartsWith("MOVE_");
+            if(apiKey == "KEY_CLIENT_3_789") return payload == "ROTATE";
+            return false;
+        }
+
+        private bool TryApplyCommand(string cmd, out string message)
+        {
+            int x = CurrentState.X;
+            int y = CurrentState.Y;
+            int rot = CurrentState.RotationDeg;
+
+            switch(cmd)
+            {
+                case "MOVE_LEFT":
+                    if(x - 1 < 0) { message = "Out of bounds"; return false; }
+                    x -= 1; break;
+                case "MOVE_RIGHT":
+                    if(x + 1 >= GRID) { message = "Out of bounds"; return false; }
+                    x += 1; break;
+                case "MOVE_UP":
+                    if(y - 2 < 0) { message = "Out of bounds"; return false; }
+                    y -= 2; break;
+                case "MOVE_DOWN":
+                    if(y + 2 >= GRID) { message = "Out of bounds"; return false; }
+                    y += 2; break;
+                case "ROTATE":
+                    rot = (rot + 90) % 360; break;
+                default:
+                    message = "Unknown command"; return false;
+            }
+
+            CurrentState.X = x;
+            CurrentState.Y = y;
+            CurrentState.RotationDeg = rot;
+            message = "OK";
+            return true;
+        }
+
+        private string DecryptIfNeeded(string base64)
+        {
+            if(string.IsNullOrEmpty(base64)) return "";
+            try
+            {
+                byte[] data = Convert.FromBase64String(base64);
+                var plain = AesHelper.Decrypt(data, SharedKey);
+                return plain;
+            }
+            catch
+            {
+                return base64;
+            }
+        }
+
+        private void LogAttempt(string apiKey, string payload, bool success, string message, DateTime time)
+        {
+            try
+            {
+                string line = $"{time:O}\t{apiKey}\t{payload}\t{success}\t{message}\r\n";
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "operations.log");
+                File.AppendAllText(path, line);
+            }
+            catch { }
+        }
+
+        private class RobotState { public int X; public int Y; public int RotationDeg; }
+    }
+}

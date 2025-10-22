@@ -1,0 +1,10 @@
+# Visual Studio privremeni fajlovi
+.vs/
+*.user
+*.suo
+*.obj
+*.log
+*.cache
+*.pdb
+bin/
+obj/
