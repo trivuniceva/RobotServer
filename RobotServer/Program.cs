@@ -159,6 +159,8 @@ namespace RobotServer
             catch { }
         }
 
+
+
         private class RobotState { public int X; public int Y; public int RotationDeg; }
     }
 }
