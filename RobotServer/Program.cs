@@ -1,8 +1,11 @@
+﻿using RobotServer.Data;
+using RobotServer.Models;
 using System;
+using System.Data.Entity;
+using System.IO;
 using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.Text;
-using System.IO;
 
 namespace RobotServer
 {
@@ -10,6 +13,23 @@ namespace RobotServer
     {
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.SetData("DataDirectory", AppDomain.CurrentDomain.BaseDirectory);
+
+            try
+            {
+                Console.WriteLine("🔹 Initializing database...");
+                Database.SetInitializer(new CreateDatabaseIfNotExists<RobotDbContext>());
+                using (var db = new RobotDbContext())
+                {
+                    db.Database.Initialize(false);
+                }
+                Console.WriteLine(" Database initialized successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Database initialization failed: " + ex.Message);
+            }
+
             string baseAddress = "http://localhost:8000/RobotService";
             using (ServiceHost host = new ServiceHost(typeof(RobotService), new Uri(baseAddress)))
             {
@@ -152,11 +172,30 @@ namespace RobotServer
         {
             try
             {
-                string line = $"{time:O}\t{apiKey}\t{payload}\t{success}\t{message}\r\n";
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "operations.log");
-                File.AppendAllText(path, line);
+                using (var db = new RobotDbContext())
+                {
+                    db.OperationLogs.Add(new OperationLog
+                    {
+                        ApiKey = apiKey,
+                        Payload = payload,
+                        Success = success,
+                        Message = message,
+                        Timestamp = time
+                    });
+                    db.SaveChanges();
+                }
+
             }
-            catch { }
+            catch (Exception ex)
+            {
+                try
+                {
+                    string line = $"{time:O}\t{apiKey}\t{payload}\t{success}\t{message}\tDB_ERR:{ex.Message}\r\n";
+                    string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "operations.log");
+                    File.AppendAllText(path, line);
+                }
+                catch { }
+            }
         }
 
         private class RobotState { public int X; public int Y; public int RotationDeg; }
