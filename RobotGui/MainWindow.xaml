@@ -22,12 +22,21 @@
             <TextBlock x:Name="TxtMsg" FontSize="16" Foreground="DarkGreen"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,10,0,0">
-            <Button Content="⬅ Left (−1)"  Click="Left_Click"   Height="36" />
-            <Button Content="➡ Right (+1)" Click="Right_Click"  Height="36" />
-            <Button Content="⬆ Up (−2)"    Click="Up_Click"     Height="36" />
-            <Button Content="⬇ Down (+2)"  Click="Down_Click"   Height="36" />
-            <Button Content="⟳ Rotate 90°" Click="Rotate_Click" Height="36" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Client: " FontSize="14" VerticalAlignment="Center"/>
+            <ComboBox x:Name="ClientSelect" Width="120" SelectionChanged="ClientSelect_SelectionChanged">
+                <ComboBoxItem Content="Client 1" IsSelected="True"/>
+                <ComboBoxItem Content="Client 2"/>
+                <ComboBoxItem Content="Client 3"/>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,40,0,0">
+            <Button x:Name="LeftBtn" Content="⬅ Left (−1)"  Click="Left_Click"   Height="36" Margin="0,0,0,5"/>
+            <Button x:Name="RightBtn" Content="➡ Right (+1)" Click="Right_Click"  Height="36" Margin="0,0,0,5"/>
+            <Button x:Name="UpBtn" Content="⬆ Up (−2)"    Click="Up_Click"     Height="36" Margin="0,0,0,5"/>
+            <Button x:Name="DownBtn" Content="⬇ Down (+2)"  Click="Down_Click"   Height="36" Margin="0,0,0,5"/>
+            <Button x:Name="RotateBtn" Content="⟳ Rotate 90°" Click="Rotate_Click" Height="36" Margin="0,0,0,5"/>
             <Separator />
             <Button Content="Clear Message" Click="Clear_Click" Height="32"/>
         </StackPanel>

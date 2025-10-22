@@ -1,6 +1,7 @@
 ﻿using RobotServer.Data;
 using RobotServer.Models;
 using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.IO;
 using System.ServiceModel;
@@ -65,18 +66,24 @@ namespace RobotServer
         private static RobotState CurrentState = new RobotState() { X = 2, Y = 2, RotationDeg = 0 };
         private const int GRID = 5;
 
+        
+        /*
         private static readonly System.Collections.Generic.Dictionary<string, int> ClientPriority = new System.Collections.Generic.Dictionary<string, int>()
         {
             {"KEY_CLIENT_1_123", 1},
             {"KEY_CLIENT_2_456", 2},
             {"KEY_CLIENT_3_789", 2}
         };
+        */
 
         public OperationResult SendCommand(CommandMessage msg)
         {
             var timestamp = DateTime.UtcNow;
             string apiKey = msg?.ApiKey ?? "";
             string payload;
+
+            var clientType = GetClientType(apiKey);
+
             try
             {
                 payload = DecryptIfNeeded(msg?.EncryptedPayloadBase64);
@@ -87,19 +94,19 @@ namespace RobotServer
                 return new OperationResult { Success = false, Message = "Decrypt error" };
             }
 
-            if(!ClientPriority.ContainsKey(apiKey))
+            if (clientType == ClientType.Unknown)
             {
                 LogAttempt(apiKey, payload, false, "Invalid apiKey", timestamp);
-                return new OperationResult { Success = false, Message = "Invalid apiKey" };
+                return new OperationResult { Success = false, Message = "Invalid apiKey", State = new RobotStateDto { X = CurrentState.X, Y = CurrentState.Y, RotationDeg = CurrentState.RotationDeg } };
             }
 
-            if(!IsOperationAllowed(apiKey, payload))
+            if (!IsAllowed(clientType, payload))
             {
-                LogAttempt(apiKey, payload, false, "Operation not allowed for this client", timestamp);
-                return new OperationResult { Success = false, Message = "Operation not allowed" };
+                LogAttempt(apiKey, payload, false, "Operation not allowed", timestamp);
+                return new OperationResult { Success = false, Message = "Operation not allowed", State = new RobotStateDto { X = CurrentState.X, Y = CurrentState.Y, RotationDeg = CurrentState.RotationDeg } };
             }
 
-            lock(ExecLock)
+            lock (ExecLock)
             {
                 bool applied = TryApplyCommand(payload, out string message);
                 LogAttempt(apiKey, payload, applied, message, timestamp);
@@ -112,6 +119,7 @@ namespace RobotServer
             }
         }
 
+        /*
         private bool IsOperationAllowed(string apiKey, string payload)
         {
             if(apiKey == "KEY_CLIENT_1_123") return true;
@@ -119,6 +127,48 @@ namespace RobotServer
             if(apiKey == "KEY_CLIENT_3_789") return payload == "ROTATE";
             return false;
         }
+        */
+
+        private enum ClientType { Unknown = 0, Client1 = 1, Client2 = 2, Client3 = 3 }
+
+        private static readonly Dictionary<string, ClientType> ApiKeyMap =
+            new Dictionary<string, ClientType>(StringComparer.Ordinal)
+            {
+                ["KEY_CLIENT_1"] = ClientType.Client1,
+                ["KEY_CLIENT_1_123"] = ClientType.Client1,
+
+                ["KEY_CLIENT_2"] = ClientType.Client2,
+                ["KEY_CLIENT_2_123"] = ClientType.Client2,
+
+                ["KEY_CLIENT_3"] = ClientType.Client3,
+                ["KEY_CLIENT_3_123"] = ClientType.Client3
+            };
+
+        private static ClientType GetClientType(string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey)) return ClientType.Unknown;
+            return ApiKeyMap.TryGetValue(apiKey, out var type) ? type : ClientType.Unknown;
+        }
+
+        private static bool IsAllowed(ClientType ct, string command)
+        {
+            command = (command ?? "").Trim().ToUpperInvariant();
+
+            switch (ct)
+            {
+                case ClientType.Client1:
+                    return command == "MOVE_LEFT" || command == "MOVE_RIGHT" ||
+                           command == "MOVE_UP" || command == "MOVE_DOWN" ||
+                           command == "ROTATE";
+                case ClientType.Client2:
+                    return command.StartsWith("MOVE_");
+                case ClientType.Client3:
+                    return command == "ROTATE";
+                default:
+                    return false;
+            }
+        }
+
 
         private bool TryApplyCommand(string cmd, out string message)
         {

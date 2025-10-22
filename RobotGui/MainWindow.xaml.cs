@@ -1,38 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace RobotGui
 {
-
     public partial class MainWindow : Window
     {
         private ChannelFactory<RobotServer.IRobotService> _factory;
         private RobotServer.IRobotService _channel;
 
-        private readonly string _apiKey = "KEY_CLIENT_1_123";
+        private string _apiKey = "KEY_CLIENT_1_123";
         private readonly byte[] _sharedKey = Encoding.UTF8.GetBytes("ThisIsA16ByteKey");
-
         private int _x = 2, _y = 2, _rot = 0;
 
         public MainWindow()
         {
             InitializeComponent();
             BuildGrid();
-            InitChannel(); 
-            DrawRobot();    
+            InitChannel();
+            DrawRobot();
         }
 
         private void InitChannel()
@@ -63,13 +54,15 @@ namespace RobotGui
         private void DrawRobot()
         {
             foreach (var child in Cells.Children.OfType<Border>())
+                child.Child = null;
+
+            foreach (var child in Cells.Children.OfType<Border>())
                 child.Background = Brushes.White;
 
             int idx = (_y * 5) + _x;
             if (idx >= 0 && idx < Cells.Children.Count)
             {
                 var cell = (Border)Cells.Children[idx];
-
                 cell.Background = Brushes.LightSkyBlue;
 
                 var marker = new Grid();
@@ -134,6 +127,45 @@ namespace RobotGui
         private void Up_Click(object sender, RoutedEventArgs e) => Send("MOVE_UP");
         private void Down_Click(object sender, RoutedEventArgs e) => Send("MOVE_DOWN");
         private void Rotate_Click(object sender, RoutedEventArgs e) => Send("ROTATE");
-        private void Clear_Click(object sender, RoutedEventArgs e) { TxtMsg.Text = ""; }
+        private void Clear_Click(object sender, RoutedEventArgs e) => TxtMsg.Text = "";
+
+        private void ClientSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string selected = (ClientSelect.SelectedItem as ComboBoxItem)?.Content.ToString();
+
+            if (selected == "Client 1")
+            {
+                _apiKey = "KEY_CLIENT_1_123";
+                EnableButtons(true, true, true, true, true);
+                TxtMsg.Foreground = Brushes.SteelBlue;
+                TxtMsg.Text = "Mode: Client 1 (All operations allowed)";
+            }
+            else if (selected == "Client 2")
+            {
+                _apiKey = "KEY_CLIENT_2_123";
+                EnableButtons(true, true, true, true, false);
+                TxtMsg.Foreground = Brushes.OrangeRed;
+                TxtMsg.Text = "Mode: Client 2 (No rotation)";
+            }
+            else if (selected == "Client 3")
+            {
+                _apiKey = "KEY_CLIENT_3_123";
+                EnableButtons(false, false, false, false, true);
+                TxtMsg.Foreground = Brushes.Green;
+                TxtMsg.Text = "Mode: Client 3 (Rotation only)";
+            }
+        }
+
+        private void EnableButtons(bool left, bool right, bool up, bool down, bool rotate)
+        {
+            if (LeftBtn == null || RightBtn == null || UpBtn == null || DownBtn == null || RotateBtn == null)
+                return;
+
+            LeftBtn.IsEnabled = left;
+            RightBtn.IsEnabled = right;
+            UpBtn.IsEnabled = up;
+            DownBtn.IsEnabled = down;
+            RotateBtn.IsEnabled = rotate;
+        }
     }
 }
