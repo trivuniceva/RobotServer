@@ -1,0 +1,39 @@
+﻿<Window x:Class="RobotGui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Robot Arm Control" Height="520" Width="720">
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="X:" FontSize="16" Margin="0,0,8,0"/>
+            <TextBlock x:Name="TxtX" FontSize="16" FontWeight="Bold" Margin="0,0,16,0"/>
+            <TextBlock Text="Y:" FontSize="16" Margin="0,0,8,0"/>
+            <TextBlock x:Name="TxtY" FontSize="16" FontWeight="Bold" Margin="0,0,16,0"/>
+            <TextBlock Text="Rot:" FontSize="16" Margin="0,0,8,0"/>
+            <TextBlock x:Name="TxtRot" FontSize="16" FontWeight="Bold" Margin="0,0,16,0"/>
+            <TextBlock x:Name="TxtMsg" FontSize="16" Foreground="DarkGreen"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,10,0,0">
+            <Button Content="⬅ Left (−1)"  Click="Left_Click"   Height="36" />
+            <Button Content="➡ Right (+1)" Click="Right_Click"  Height="36" />
+            <Button Content="⬆ Up (−2)"    Click="Up_Click"     Height="36" />
+            <Button Content="⬇ Down (+2)"  Click="Down_Click"   Height="36" />
+            <Button Content="⟳ Rotate 90°" Click="Rotate_Click" Height="36" />
+            <Separator />
+            <Button Content="Clear Message" Click="Clear_Click" Height="32"/>
+        </StackPanel>
+
+        <Grid Grid.Column="1" Grid.Row="1" Margin="12,0,0,0">
+            <UniformGrid x:Name="Cells" Rows="5" Columns="5" />
+        </Grid>
+    </Grid>
+</Window>

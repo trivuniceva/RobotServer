@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client2_App", "Client2_App\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client3_App", "Client3_App\Client3_App.csproj", "{D3379802-F973-4DC7-850B-0BC39583FA6A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotGui", "RobotGui\RobotGui.csproj", "{C0625624-B9E1-423C-BF42-5C12A2BDF46C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{D3379802-F973-4DC7-850B-0BC39583FA6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3379802-F973-4DC7-850B-0BC39583FA6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3379802-F973-4DC7-850B-0BC39583FA6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0625624-B9E1-423C-BF42-5C12A2BDF46C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0625624-B9E1-423C-BF42-5C12A2BDF46C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0625624-B9E1-423C-BF42-5C12A2BDF46C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0625624-B9E1-423C-BF42-5C12A2BDF46C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
