@@ -9,6 +9,7 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -22,16 +23,17 @@
             <TextBlock x:Name="TxtMsg" FontSize="16" Foreground="DarkGreen"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-            <TextBlock Text="Client: " FontSize="14" VerticalAlignment="Center"/>
-            <ComboBox x:Name="ClientSelect" Width="120" SelectionChanged="ClientSelect_SelectionChanged">
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="Client: " FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox x:Name="ClientSelect" Width="140" Height="28"
+                      SelectionChanged="ClientSelect_SelectionChanged">
                 <ComboBoxItem Content="Client 1" IsSelected="True"/>
                 <ComboBoxItem Content="Client 2"/>
                 <ComboBoxItem Content="Client 3"/>
             </ComboBox>
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,40,0,0">
+        <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,0,0,0">
             <Button x:Name="LeftBtn" Content="⬅ Left (−1)"  Click="Left_Click"   Height="36" Margin="0,0,0,5"/>
             <Button x:Name="RightBtn" Content="➡ Right (+1)" Click="Right_Click"  Height="36" Margin="0,0,0,5"/>
             <Button x:Name="UpBtn" Content="⬆ Up (−2)"    Click="Up_Click"     Height="36" Margin="0,0,0,5"/>
@@ -41,7 +43,7 @@
             <Button Content="Clear Message" Click="Clear_Click" Height="32"/>
         </StackPanel>
 
-        <Grid Grid.Column="1" Grid.Row="1" Margin="12,0,0,0">
+        <Grid Grid.Column="1" Grid.Row="2" Margin="12,0,0,0">
             <UniformGrid x:Name="Cells" Rows="5" Columns="5" />
         </Grid>
     </Grid>
